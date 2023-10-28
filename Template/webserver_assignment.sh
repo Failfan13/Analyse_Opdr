@@ -145,5 +145,13 @@ function main() {
 
 }
 
+function user_validation() {
+    # Do not remove next line!
+    echo "function remove"
+
+    # Remove each package that was installed during setup
+
+}
+
 # Pass commandline arguments to function main
 main "$@"

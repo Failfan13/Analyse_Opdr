@@ -15,7 +15,8 @@ function handle_error() {
     echo "function handle_error"
 
    # TODO Display error and return an exit code
-   
+   echo -e "Error: $1"
+   exit 1
 }
  
 # Function to solve dependencies
@@ -128,24 +129,33 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
-# Add user input reqest
-    read -rp "Enter command: " u_input
-
-#Convert input to upper & remove spaces from input
-    u_input_lower="${u_input^^}"
-    u_input_converted="${u_input_lower// /}"
-
     # TODO
-    # Read global variables from configfile
+    # Add verification that a command has been passed to script
 
-#Verify command is available and run attachted function
-    case $u_input_converted in
+# Command and action given at excecution of script
+    command="$1"
+    action="$2"
 
+# Format command and action in particular style
+    command_formatted="${command^^}"
+    action_formatted="${action^^}"
+
+# Verify command is available and run attachted function
+    case $command_formatted in
         "SETUP")
             echo -n "Setup..."
             ;;
         "NOSECRETS")
-            echo -n "Nosecrets..."
+# Add options for "install, uninstall and test"
+            if [ "$action_formatted" = "--INSTALL" ];then
+                echo $action_formatted"inst"
+            elif [ "$action_formatted" = "--UNINSTALL" ]; then
+                echo $action_formatted"uninst"
+            elif [ "$action_formatted" = "--TEST" ]; then
+                echo $action_formatted"test"
+            else
+                handle_error "Could not find accompanied action\nexiting..."
+            fi
             ;;
         "PYWEBSERVER")
             echo -n "Pywebserver..."
@@ -154,8 +164,7 @@ function main() {
             echo -n "Removing..."
             ;;
         *)    
-        echo "Invalid ending session"
-        exit
+            handle_error "Could not find accompanied command\nexiting..."
         ;;
     esac
 
@@ -173,3 +182,10 @@ function main() {
 
 # Pass commandline arguments to function main
 main "$@"
+
+
+# # Add user input reqest
+#     read -rp "Enter command: " u_input
+# #Convert input to upper & remove spaces from input
+#     u_input_lower="${u_input^^}"
+#     u_input_converted="${u_input_lower// /}"

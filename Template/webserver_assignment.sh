@@ -14,9 +14,9 @@ function handle_error() {
     # Do not remove next line!
     echo "function handle_error"
 
-   # TODO Display error and return an exit code
-   echo -e "Error: $1"
-   exit 1
+# TODO Display error and return an exit code
+    echo -e "Error: $1"
+    exit 1
 }
  
 # Function to solve dependencies
@@ -129,63 +129,50 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
-    # TODO
-    # Add verification that a command has been passed to script
+# Verify supplied commands is 1 atleast
+    if [ $# -lt 1 ]; then
+        handle_error "No command supplied"
+    fi
 
 # Command and action given at excecution of script
     command="$1"
     action="$2"
 
-# Format command and action in particular style
-    command_formatted="${command^^}"
+# Format command(up/low) and action in particular style
+    command_formatted_up="${command^^}"
+    command_formatted_low="${command,,}"
     action_formatted="${action^^}"
 
 # Verify command is available and run attachted function
-    case $command_formatted in
+    case $command_formatted_up in
         "SETUP")
-            echo -n "Setup..."
+            setup
             ;;
-        "NOSECRETS")
+        "NOSECRETS" | "PYWEBSERVER")
 # Add options for "install, uninstall and test"
             if [ "$action_formatted" = "--INSTALL" ];then
-                echo $action_formatted"inst"
+                echo $command_formatted_low"--install"
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
-                echo $action_formatted"uninst"
+                echo $command_formatted_low"--uninstall"
             elif [ "$action_formatted" = "--TEST" ]; then
-                echo $action_formatted"test"
+                echo $command_formatted_low"--test"
             else
                 handle_error "Could not find accompanied action\nexiting..."
             fi
             ;;
-        "PYWEBSERVER")
-            echo -n "Pywebserver..."
-            ;;
         "REMOVE")
-            echo -n "Removing..."
+                remove
             ;;
         *)    
             handle_error "Could not find accompanied command\nexiting..."
         ;;
     esac
 
-    # Check if the second argument is provided on the command line
-    # Check if the second argument is valid
-    # allowed values are "--install" "--uninstall" "--test"
-    # bash must exit if value does not match one of those values
-
     # Execute the appropriate command based on the arguments
     # TODO In case of setup
     # excute the function check_dependency and provide necessary arguments
     # expected arguments are the installation directory specified in dev.conf
-
 }
 
 # Pass commandline arguments to function main
 main "$@"
-
-
-# # Add user input reqest
-#     read -rp "Enter command: " u_input
-# #Convert input to upper & remove spaces from input
-#     u_input_lower="${u_input^^}"
-#     u_input_converted="${u_input_lower// /}"

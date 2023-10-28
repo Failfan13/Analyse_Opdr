@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
 # Define global variable here
+config_file="config.conf"
 
 # TODO: Add required and additional packagenas dependecies 
 # for your implementation
 # declare -a packages=()
+declare -a packages=""
 
 # TODO: define a function to handle errors
 # This funtion accepts two parameters one as the error message and one as the command to be excecuted when error occurs.
@@ -126,13 +128,37 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
+# Add user input reqest
+    read -rp "Enter command: " u_input
+
+#Convert input to upper & remove spaces from input
+    u_input_lower="${u_input^^}"
+    u_input_converted="${u_input_lower// /}"
+
     # TODO
     # Read global variables from configfile
 
-    # Get arguments from the commandline
-    # Check if the first argument is valid
-    # allowed values are "setup" "nosecrets" "pywebserver" "remove"
-    # bash must exit if value does not match one of those values
+#Verify command is available and run attachted function
+    case $u_input_converted in
+
+        "SETUP")
+            echo -n "Setup..."
+            ;;
+        "NOSECRETS")
+            echo -n "Nosecrets..."
+            ;;
+        "PYWEBSERVER")
+            echo -n "Pywebserver..."
+            ;;
+        "REMOVE")
+            echo -n "Removing..."
+            ;;
+        *)    
+        echo "Invalid ending session"
+        exit
+        ;;
+    esac
+
     # Check if the second argument is provided on the command line
     # Check if the second argument is valid
     # allowed values are "--install" "--uninstall" "--test"
@@ -142,14 +168,6 @@ function main() {
     # TODO In case of setup
     # excute the function check_dependency and provide necessary arguments
     # expected arguments are the installation directory specified in dev.conf
-
-}
-
-function user_validation() {
-    # Do not remove next line!
-    echo "function remove"
-
-    # Remove each package that was installed during setup
 
 }
 

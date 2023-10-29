@@ -14,13 +14,13 @@ function handle_error() {
     # Do not remove next line!
     echo "function handle_error"
 
-#Display the given error code
+    #Display the given error code
     echo -e "Error: $1"
 
-#On error executable
+    #On error executable
     eval "$2"
 
-#Exit script
+    #Exit script
     exit 1
 }
  
@@ -29,10 +29,10 @@ function setup() {
     # Do not remove next line!
     echo "function setup"
     
-# Checks each dependancy in $dependancies
+# Checks each dependency in $dependancies
     for pkg in "${dependancies[@]}"; do
-        echo "Checking dependancy: $pkg"
-        check_dependancy "$pkg"
+        echo "Checking dependency: $pkg"
+        check_dependency "$pkg"
     done
 
     # TODO check if nessassary dependecies and folder structure exists and 
@@ -45,16 +45,16 @@ function setup() {
     # if a a problem occur during the this process 
     # use the function handle_error() to print a messgage and handle the error
 
-    # TODO check if required folders and files exists before installations
-    # For example: the folder ./apps/ and the file "dev.conf"
-
 # Checking the file & folder structure
     echo "Checking folder structure"
 
-    if [ -d "./apps/" ]; then
-        echo "exists"
-    else
+    if [ ! -d "./apps/" ]; then
+        echo "Creating apps folder"
         mkdir ./apps/
+    elif [ ! -f "dev.conf" ]; then
+        handle_error "Missing dev.conf file"
+    elif [ ! -f "test.json" ]; then
+        handle_error "Missing test.json"
     fi
 }
 
@@ -195,18 +195,25 @@ function main() {
     # expected arguments are the installation directory specified in dev.conf
 }
 
-function check_dependancy() {
-# Find dependancy by name in installed packages and save the Status
+# Dependency checker arguments "package_name", "(true/false) auto install"
+function check_dependency() {
+# Find dependency by name in installed packages and save the Status
     installed=$(dpkg-query -W -f='${Status}' "$1")
 
 # If status installed found and return, otherwise provide installation instructions
     if [ "$installed" = "install ok installed" ]; then
         echo -e "Found and installed\n"
         return
-    else
-        echo -e "Missing dependancy\n"
     fi
-    handle_error "$1 not found, To install please use: sudo apt install $1\n"
+
+# Recursion for checking installed dependency
+    echo -e "Missing dependency, trying to install\n"
+    if [ "$2" != false ]; then
+        "$(sudo apt-get install "$1")"
+        check_dependency "$1" false
+    else
+        handle_error "$1 not found/installed, To install please use: sudo apt install $1\n"
+    fi
 }
 
 # Pass commandline arguments to function main

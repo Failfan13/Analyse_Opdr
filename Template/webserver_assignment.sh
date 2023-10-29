@@ -3,7 +3,7 @@
 # Define global variable here
 config_file="config.conf"
 
-# Declared dependancies
+# Declared necessary dependancies
 declare -a dependancies=("unzip" "wget" "curl")
 
 # Added necessary packages
@@ -41,21 +41,7 @@ function setup() {
     # TODO installation from online package requires values for
     # package_name package_url install_dir
 
-    # TODO check if required dependency is not already installed otherwise install it
-    # if a a problem occur during the this process 
-    # use the function handle_error() to print a messgage and handle the error
-
-# Checking the file & folder structure
-    echo "Checking folder structure"
-
-    if [ ! -d "./apps/" ]; then
-        echo "Creating apps folder"
-        mkdir ./apps/
-    elif [ ! -f "dev.conf" ]; then
-        handle_error "Missing dev.conf file"
-    elif [ ! -f "test.json" ]; then
-        handle_error "Missing test.json"
-    fi
+    folder_structure
 }
 
 # Function to install a package from a URL
@@ -197,6 +183,8 @@ function main() {
 
 # Dependency checker arguments "package_name", "(true/false) auto install"
 function check_dependency() {
+    # Do not remove next line!
+    echo "function check_dependency"
 # Find dependency by name in installed packages and save the Status
     installed=$(dpkg-query -W -f='${Status}' "$1")
 
@@ -214,6 +202,40 @@ function check_dependency() {
     else
         handle_error "$1 not found/installed, To install please use: sudo apt install $1\n"
     fi
+}
+
+function folder_structure()
+{
+    # Do not remove next line!
+    echo "function folder_structure"
+
+# Checking the file & folder structure
+    echo -e "Checking folder structure\n"
+
+
+    echo "Checking apps folder"
+    if [ ! -d "./apps/" ]; then
+        echo "Creating apps folder"
+        mkdir ./apps/
+    else
+        echo "Verified apps folder"
+    fi
+
+    echo "Checking dev.conf"
+    if [ ! -f "dev.conf" ]; then
+        handle_error "Missing dev.conf file"
+    else
+        echo "Verified dev.conf"
+    fi
+
+    echo "Checking test.json"
+    if [ ! -f "test.json" ]; then
+        handle_error "Missing test.json"
+    else
+        echo "Verified test.json"
+    fi
+
+    echo "Folder structure verified"
 }
 
 # Pass commandline arguments to function main

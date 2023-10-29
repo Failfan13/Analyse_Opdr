@@ -3,19 +3,21 @@
 # Define global variable here
 config_file="config.conf"
 
-# TODO: Add required and additional packagenas dependecies 
-# for your implementation
-# declare -a packages=()
-declare -a packages=""
+# Added necessary packages
+declare -a packages=("unzip" "wget" "curl")
 
-# TODO: define a function to handle errors
-# This funtion accepts two parameters one as the error message and one as the command to be excecuted when error occurs.
+# Error handling function with 2 passable arguments
 function handle_error() {
     # Do not remove next line!
     echo "function handle_error"
 
-# TODO Display error and return an exit code
+#Display the given error code
     echo -e "Error: $1"
+
+#On error executable
+    eval "$2"
+
+#Exit script
     exit 1
 }
  
@@ -23,6 +25,12 @@ function handle_error() {
 function setup() {
     # Do not remove next line!
     echo "function setup"
+    
+# Checks each package in $packages and returns if all installed
+    for pkg in "${packages[@]}"; do
+        echo "Checking package: $pkg"
+        check_dependancy "$pkg"
+    done
 
     # TODO check if nessassary dependecies and folder structure exists and 
     # print the outcome for each checking step
@@ -37,6 +45,14 @@ function setup() {
     # TODO check if required folders and files exists before installations
     # For example: the folder ./apps/ and the file "dev.conf"
 
+# Checking the file & folder structure
+    echo "Checking folder structure"
+
+    if [ -d "./apps/" ]; then
+        echo "exists"
+    else
+        mkdir ./apps/
+    fi
 }
 
 # Function to install a package from a URL
@@ -172,6 +188,21 @@ function main() {
     # TODO In case of setup
     # excute the function check_dependency and provide necessary arguments
     # expected arguments are the installation directory specified in dev.conf
+}
+
+function check_dependancy() {
+# Find package by name in installed packages and save the Status
+    installed=$(dpkg-query -W -f='${Status}' "$1")
+
+# If status installed found and return otherwise install package using install_package
+    if [ "$installed" = "install ok installed" ]; then
+        echo -e "Found and installed\n"
+        return
+    else
+        echo -e "Missing package... installing\n"
+        # needs leading to install_package() -url-
+    fi
+    #handle_error "$1 not found, To install please use: sudo apt install $1\n"
 }
 
 # Pass commandline arguments to function main

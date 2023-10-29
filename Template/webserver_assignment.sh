@@ -3,8 +3,11 @@
 # Define global variable here
 config_file="config.conf"
 
+# Declared dependancies
+declare -a dependancies=("unzip" "wget" "curl")
+
 # Added necessary packages
-declare -a packages=("unzip" "wget" "curl")
+declare -a packages=("")
 
 # Error handling function with 2 passable arguments
 function handle_error() {
@@ -26,9 +29,9 @@ function setup() {
     # Do not remove next line!
     echo "function setup"
     
-# Checks each package in $packages and returns if all installed
-    for pkg in "${packages[@]}"; do
-        echo "Checking package: $pkg"
+# Checks each dependancy in $dependancies
+    for pkg in "${dependancies[@]}"; do
+        echo "Checking dependancy: $pkg"
         check_dependancy "$pkg"
     done
 
@@ -61,6 +64,8 @@ function setup() {
 function install_package() {
     # Do not remove next line!
     echo "function install_package"
+
+    setup
 
     # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
 
@@ -191,18 +196,17 @@ function main() {
 }
 
 function check_dependancy() {
-# Find package by name in installed packages and save the Status
+# Find dependancy by name in installed packages and save the Status
     installed=$(dpkg-query -W -f='${Status}' "$1")
 
-# If status installed found and return otherwise install package using install_package
+# If status installed found and return, otherwise provide installation instructions
     if [ "$installed" = "install ok installed" ]; then
         echo -e "Found and installed\n"
         return
     else
-        echo -e "Missing package... installing\n"
-        # needs leading to install_package() -url-
+        echo -e "Missing dependancy\n"
     fi
-    #handle_error "$1 not found, To install please use: sudo apt install $1\n"
+    handle_error "$1 not found, To install please use: sudo apt install $1\n"
 }
 
 # Pass commandline arguments to function main

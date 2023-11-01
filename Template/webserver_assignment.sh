@@ -113,6 +113,29 @@ function install_package() {
     # nosecrets might have additional commands that needs to be executed
     # make sure the user is allowed to remove this folder during uninstall
 
+
+# ------------------------ roggerio added
+
+# CODE IS NIET GEFORMATEERD IN BASH WAARDOOR HET NIET WERKT & LOCAL DIR TOEGEVOEGD
+
+    # echo "Downloading $pgk_name"
+    # powershell -Command "Invoke-WebRequest $pkg_url -Outfile $pgk_name.exe name"
+    # echo "Done!"
+    # echo "Unzipping $pgk_name..."
+
+    # if $pkg_url %errorlevel% ==0(
+    #     echo "Done.."
+    # ) else (
+    #     echo "Not Done...!"
+    # )
+    # if $pgk_name %errorlevel% ==0 (
+    #     echo "Done.."
+    # ) else (
+    #     echo "Not Done...!"
+    # )
+
+    # powershell "Expand-Archive $pgk_name -DestinationPath C:\Users\Roggerio\Install"
+
 }
 
 function rollback_nosecrets() {

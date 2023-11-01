@@ -94,48 +94,52 @@ function install_package() {
     #if command_exists "curl"
 
     # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
+    echo "Downloading the file from the url link"
+    wget $pkg_url
+    echo $?
+    if [ $? -eq 0 ]
+    then
+    echo "Download has been succesfull"
+    exit 0
+    else
+    echo "Download has been unsuccesfull"
+    return
+    fi
 
-    # TODO Specific actions that need to be taken for a specific application during this process should be handeld in a separate if-else
-
-    # TODO Every intermediate steps need to be handeld carefully. error handeling should be dealt with using handle_error() and/or rolleback()
-
-    # TODO If a file is downloaded but cannot be zipped a rollback is needed to be able to start from scratch
-    # for example: package names and urls that are needed are passed or extracted from the config file
-
+    echo "creating a zip"
+    echo $?
+    wget -O $pgk_name.zip $pkg_url
+    if [ $? -eq 0 ]
+    then
+    echo "Creating a zip has been succesfull"
+    exit 0
+    else
+    echo "Creating a zip has been unsuccesfulll"
+    return
+    fi
+    
+    # TODO create a specific installation folder for the current package
+    echo "Creating a specific instalation folder for the current package"
+    mkdir $install_dir
 
     # TODO Download and unzip the package
-    # if a a problem occur during the this proces use the function handle_error() to print a messgage and handle the error
+    unzip $pgk_name.zip
 
     # TODO extract the package to the installation folder and store it into a dedicated folder
-    # If a problem occur during the this proces use the function handle_error() to print a messgage and handle the error
-
+    echo "Extracting the package into the install folder"
+    mv $pgk_name  $install_dir
+    echo $?
+    if [ $? -eq 0 ]
+    then
+    echo "$pgk_name succefully extracted into the install folder"
+    exit 0
+    else
+    echo "$pgk_name can't extract into the install folder"
+    return
+    fi
     # TODO this section can be used to implement application specifc logic
     # nosecrets might have additional commands that needs to be executed
     # make sure the user is allowed to remove this folder during uninstall
-
-
-# ------------------------ roggerio added
-
-# CODE IS NIET GEFORMATEERD IN BASH WAARDOOR HET NIET WERKT & LOCAL DIR TOEGEVOEGD
-
-    # echo "Downloading $pgk_name"
-    # powershell -Command "Invoke-WebRequest $pkg_url -Outfile $pgk_name.exe name"
-    # echo "Done!"
-    # echo "Unzipping $pgk_name..."
-
-    # if $pkg_url %errorlevel% ==0(
-    #     echo "Done.."
-    # ) else (
-    #     echo "Not Done...!"
-    # )
-    # if $pgk_name %errorlevel% ==0 (
-    #     echo "Done.."
-    # ) else (
-    #     echo "Not Done...!"
-    # )
-
-    # powershell "Expand-Archive $pgk_name -DestinationPath C:\Users\Roggerio\Install"
-
 }
 
 function rollback_nosecrets() {

@@ -29,13 +29,6 @@ function handle_error() {
 function setup() {
     # Do not remove next line!
     echo "function setup"
-    
-    # Checks each dependency in $dependancies
-    for pkg in "${dependancies[@]}";
-    do
-        echo "Checking dependency: $pkg"
-        check_dependency "$pkg"
-    done
 
     # Set install directory to conf specified and use cut to remove variable name
     install_dir="$(grep -E "INSTALL_DIR=" "$config_file" | cut -d= -f2)"
@@ -43,7 +36,16 @@ function setup() {
     # Function for checking folder structure
     folder_structure
 
+    # Checks each dependency in $dependancies
+    echo -e "\nChecking required dependencies"
+    for pkg in "${dependancies[@]}";
+    do
+        echo "Checking dependency: $pkg"
+        check_dependency "$pkg"
+    done
+
     # Call install_package for each package in global packages variable
+    echo -e "Installing packages"
     iter=0
     for pkg in "${packages[@]}"; 
     do
@@ -66,18 +68,30 @@ function install_package() {
     pkg_url="$2"
 
 # Check if file name and url are not empty
-    if [ "$pgk_name" = "" ] || [ "$pkg_url" = "" ]; then
+    if [ -z "$pgk_name" ] || [ -z "$pkg_url" ]; then
         handle_error "Package info could not be received"
     fi
 
 # Check if package folder already exists
-    echo "Checkinf package folders"
+    echo "Checking package folders"
     if [ ! -d "./$install_dir/$pgk_name" ]; then
         echo "Creating package folder"
         mkdir "./$install_dir/$pgk_name"
     elif [ -z "$(ls -A "./$install_dir/$pgk_name")" ]; then
         echo "Package $pgk_name already exists"
+        return
     fi
+
+# Check if URL is valid
+    echo "Validating URL"
+    if curl --head --silent --fail "$pkg_url"; then
+        echo "Url is accessable"
+    else
+        echo "Url is inaccessable"
+        return
+    fi
+
+    #if command_exists "curl"
 
     # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
 
@@ -87,8 +101,6 @@ function install_package() {
 
     # TODO If a file is downloaded but cannot be zipped a rollback is needed to be able to start from scratch
     # for example: package names and urls that are needed are passed or extracted from the config file
-
-    # TODO check if the application-folder and the url of the dependency exist
 
 
     # TODO Download and unzip the package
@@ -213,8 +225,9 @@ function check_dependency() {
     echo "function check_dependency"
 
     # Find dependency by name in installed packages and save the Status
-    installed=$(dpkg-query -W -f='${Status}' "$1")
-
+    #installed=$(dpkg-query -W -f='${Status}' "$1")
+    installed=$(cmd_exists "$1")
+    
     # If status installed found and return, otherwise provide installation instructions
     if [ "$installed" = "install ok installed" ]; then
         echo -e "Found and installed\n"
@@ -224,11 +237,17 @@ function check_dependency() {
     # Recursion for checking installed dependency
     echo -e "Missing dependency, trying to install\n"
     if [ "$2" != false ]; then
-        "$(sudo apt-get install "$1")"
+        #"$(sudo apt-get install "$1")"
         check_dependency "$1" false
     else
-        handle_error "$1 not found/installed, To install please use: sudo apt install $1\n"
+        handle_error "$1 not able to install, To install please use: sudo apt install $1\n"
     fi
+}
+
+function cmd_exists()
+{
+    # Check if a command exists
+    dpkg-query -W -f='${Status}' "$1"
 }
 
 # Folder checking one argument "install_dir"

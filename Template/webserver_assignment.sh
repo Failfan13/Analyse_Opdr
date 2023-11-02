@@ -95,27 +95,23 @@ function install_package() {
 
     # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
     echo "Downloading the file from the url link"
-    wget $pkg_url
+    wget "$pkg_url"
     echo $?
-    if [ $? -eq 0 ]
-    then
-    echo "Download has been succesfull"
-    exit 0
+    if [[ $? -eq 0 ]]; then
+        echo "Download has been succesfull"
     else
-    echo "Download has been unsuccesfull"
-    return
+        echo "Download has been unsuccesfull"
+        return
     fi
 
     echo "creating a zip"
     echo $?
     wget -O $pgk_name.zip $pkg_url
-    if [ $? -eq 0 ]
-    then
-    echo "Creating a zip has been succesfull"
-    exit 0
+    if [ $? -eq 0 ]; then
+        echo "Creating a zip has been succesfull"
     else
-    echo "Creating a zip has been unsuccesfulll"
-    return
+        echo "Creating a zip has been unsuccesfulll"
+        return
     fi
     
     # TODO create a specific installation folder for the current package
@@ -129,14 +125,13 @@ function install_package() {
     echo "Extracting the package into the install folder"
     mv $pgk_name  $install_dir
     echo $?
-    if [ $? -eq 0 ]
-    then
-    echo "$pgk_name succefully extracted into the install folder"
-    exit 0
+    if [ $? -eq 0 ]; then
+        echo "$pgk_name succefully extracted into the install folder"
     else
-    echo "$pgk_name can't extract into the install folder"
-    return
+        echo "$pgk_name can't extract into the install folder"
+        return
     fi
+
     # TODO this section can be used to implement application specifc logic
     # nosecrets might have additional commands that needs to be executed
     # make sure the user is allowed to remove this folder during uninstall
@@ -194,7 +189,7 @@ function remove() {
     echo "function remove"
 
     # Remove each package that was installed during setup
-
+    
 }
 
 function main() {
@@ -251,12 +246,11 @@ function check_dependency() {
     # Do not remove next line!
     echo "function check_dependency"
 
-    # Find dependency by name in installed packages and save the Status
-    #installed=$(dpkg-query -W -f='${Status}' "$1")
+    # Check if dependency has a file location if to    yes (0/1) no
     installed=$(cmd_exists "$1")
-    
+
     # If status installed found and return, otherwise provide installation instructions
-    if [ "$installed" = "install ok installed" ]; then
+    if [ "$installed" = 0 ]; then
         echo -e "Found and installed\n"
         return
     fi
@@ -264,17 +258,21 @@ function check_dependency() {
     # Recursion for checking installed dependency
     echo -e "Missing dependency, trying to install\n"
     if [ "$2" != false ]; then
-        #"$(sudo apt-get install "$1")"
+        "$(sudo apt-get install "$1")"
         check_dependency "$1" false
     else
         handle_error "$1 not able to install, To install please use: sudo apt install $1\n"
     fi
 }
 
+# Checks if given command exists and returns 0/1 to caller
 function cmd_exists()
 {
-    # Check if a command exists
-    dpkg-query -W -f='${Status}' "$1"
+    if command -v "$1" > /dev/null; then
+        echo 0
+    else
+        echo 1
+    fi
 }
 
 # Folder checking one argument "install_dir"

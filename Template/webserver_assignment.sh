@@ -8,7 +8,10 @@ install_dir=""
 declare -a dependancies=("unzip" "wget" "curl")
 
 # Added necessary packages
-declare -a packages=("nosecrets" "pywebserver")
+declare -a packages=(
+    "nosecrets APP1_URL"
+    "pywebserver APP2_URL"
+)
 
 # Error handling function with 2 passable arguments
 function handle_error() {
@@ -46,12 +49,19 @@ function setup() {
 
     # Call install_package for each package in global packages variable
     echo -e "Installing packages"
-    iter=0
+    # iter=0
+    # for pkg in "${packages[@]}"; 
+    # do
+    #     url="$(grep -E "APP"$(("$iter" + 1))"_URL=" "$config_file" | cut -d= -f2)"
+    #     install_package "$pkg" "$url"
+    #     iter=$(("iter" + 1))
+    # done
+
     for pkg in "${packages[@]}"; 
     do
-        url="$(grep -E "APP"$(("$iter" + 1))"_URL=" "$config_file" | cut -d= -f2)"
-        install_package "$pkg" "$url"
-        iter=$(("iter" + 1))
+        read -ra pkg_url <<< "$pkg"
+        url="$(grep -E "${pkg_url[1]}"= "$config_file" | cut -d= -f2)"
+        install_package "${pkg_url[0]}" "$url"
     done
 }
 
@@ -115,6 +125,7 @@ function install_package() {
         echo "Package successfully unzipped"
     else
         handle_error "Failed to unzip, rolling back install"
+# ----------------- rollback hiero
     fi
 
     # TODO this section can be used to implement application specifc logic

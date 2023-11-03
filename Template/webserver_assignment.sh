@@ -78,58 +78,43 @@ function install_package() {
         echo "Creating package folder"
         mkdir "./$install_dir/$pgk_name"
     elif [ -z "$(ls -A "./$install_dir/$pgk_name")" ]; then
-        echo "Package $pgk_name already exists"
-        return
+        echo "Folder for $pgk_name already exists"
+    else
+        handle_error "$pgk_name already installed. Please remove if not working"
     fi
 
 # Check if URL is valid
-    echo "Validating URL"
-    if curl --head --silent --fail "$pkg_url"; then
+    echo -e "\nValidating URL"
+    if curl --output /dev/null --silent --head --fail "$pkg_url"; then
         echo "Url is accessable"
     else
         echo "Url is inaccessable"
         return
     fi
 
-    #if command_exists "curl"
+# Download the zip file to downloads folder
+    echo -e "\nDownloading package to downloads folder"
+    download="wget -qO ./downloads/$pgk_name.zip $pkg_url"
 
-    # TODO The logic for downloading from a URL and unizpping the downloaded files of different applications must be generic
-    echo "Downloading the file from the url link"
-    wget "$pkg_url"
-    echo $?
-    if [[ $? -eq 0 ]]; then
-        echo "Download has been succesfull"
+# Download succesfull or not
+    if [ -f "./downloads/$pgk_name.zip" ]; then
+        echo "Package has already been downloaded"
+    elif eval "$download"; then
+        echo "Package succesfully downloaded"
     else
-        echo "Download has been unsuccesfull"
-        return
+        handle_error "Package download failed, rolling back install"
+# ---------------- rollback hiero
     fi
 
-    echo "creating a zip"
-    echo $?
-    wget -O $pgk_name.zip $pkg_url
-    if [ $? -eq 0 ]; then
-        echo "Creating a zip has been succesfull"
+# Unzipping downloaded file
+    echo -e "\nUnzipping downloaded package"
+    unzip="unzip -j ./downloads/$pgk_name -d ./$install_dir/$pgk_name"
+    if [ ! -f "./downloads/$pgk_name.zip" ]; then
+        echo "Package zip not found please re-install"
+    elif eval "$unzip"; then
+        echo "Package successfully unzipped"
     else
-        echo "Creating a zip has been unsuccesfulll"
-        return
-    fi
-    
-    # TODO create a specific installation folder for the current package
-    echo "Creating a specific instalation folder for the current package"
-    mkdir $install_dir
-
-    # TODO Download and unzip the package
-    unzip $pgk_name.zip
-
-    # TODO extract the package to the installation folder and store it into a dedicated folder
-    echo "Extracting the package into the install folder"
-    mv $pgk_name  $install_dir
-    echo $?
-    if [ $? -eq 0 ]; then
-        echo "$pgk_name succefully extracted into the install folder"
-    else
-        echo "$pgk_name can't extract into the install folder"
-        return
+        handle_error "Failed to unzip, rolling back install"
     fi
 
     # TODO this section can be used to implement application specifc logic
@@ -268,6 +253,7 @@ function check_dependency() {
 # Checks if given command exists and returns 0/1 to caller
 function cmd_exists()
 {
+    # If command response yes/0 or no/1
     if command -v "$1" > /dev/null; then
         echo 0
     else

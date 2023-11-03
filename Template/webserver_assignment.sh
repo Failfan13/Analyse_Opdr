@@ -2,7 +2,7 @@
 
 # Define global variable here
 config_file="dev.conf"
-install_dir=""
+install_dir="$(grep -E "INSTALL_DIR=" "$config_file" | cut -d= -f2)"
 
 # Declared necessary dependancies
 declare -a dependancies=("unzip" "wget" "curl")
@@ -34,7 +34,7 @@ function setup() {
     echo "function setup"
 
     # Set install directory to conf specified and use cut to remove variable name
-    install_dir="$(grep -E "INSTALL_DIR=" "$config_file" | cut -d= -f2)"
+    # install_dir="$(grep -E "INSTALL_DIR=" "$config_file" | cut -d= -f2)"
 
     # Function for checking folder structure
     folder_structure
@@ -49,19 +49,11 @@ function setup() {
 
     # Call install_package for each package in global packages variable
     echo -e "Installing packages"
-    # iter=0
-    # for pkg in "${packages[@]}"; 
-    # do
-    #     url="$(grep -E "APP"$(("$iter" + 1))"_URL=" "$config_file" | cut -d= -f2)"
-    #     install_package "$pkg" "$url"
-    #     iter=$(("iter" + 1))
-    # done
-
     for pkg in "${packages[@]}"; 
     do
-        read -ra pkg_url <<< "$pkg"
-        url="$(grep -E "${pkg_url[1]}"= "$config_file" | cut -d= -f2)"
-        install_package "${pkg_url[0]}" "$url"
+        read -ra pkg_url_arr <<< "$pkg"
+        url="$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
+        install_package "${pkg_url_arr[0]}" "$url"
     done
 }
 
@@ -86,7 +78,7 @@ function install_package() {
     echo "Checking package folders"
     if [ ! -d "./$install_dir/$pgk_name" ]; then
         echo "Creating package folder"
-        mkdir "./$install_dir/$pgk_name"
+        mkdir -p "./$install_dir/$pgk_name"
     elif [ -z "$(ls -A "./$install_dir/$pgk_name")" ]; then
         echo "Folder for $pgk_name already exists"
     else
@@ -104,6 +96,7 @@ function install_package() {
 
 # Download the zip file to downloads folder
     echo -e "\nDownloading package to downloads folder"
+    mkdir ./downloads
     download="wget -qO ./downloads/$pgk_name.zip $pkg_url"
 
 # Download succesfull or not
@@ -209,12 +202,13 @@ function main() {
 # Verify command is available and run attachted function
     case $command_formatted_up in
         "SETUP")
-            setup
+            # setup
             ;;
         "NOSECRETS" | "PYWEBSERVER")
 # Add options for "install, uninstall and test"
             if [ "$action_formatted" = "--INSTALL" ];then
-                echo $command_formatted_low"--install"
+                read -ra pkg_url_arr <<< "${packages[0]}"
+                install_package "$command_formatted_low" "$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
                 echo $command_formatted_low"--uninstall"
             elif [ "$action_formatted" = "--TEST" ]; then
@@ -279,7 +273,7 @@ function folder_structure()
     echo "function folder_structure"
 
     # Checking the file & folder structure
-    echo -e "Checking folder structure\n"
+    echo -e "\nChecking folder structure"
 
     echo "Checking config file"
     if [ ! -f "dev.conf" ]; then

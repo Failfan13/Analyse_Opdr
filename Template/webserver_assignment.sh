@@ -204,7 +204,10 @@ function test_nosecrets() {
 function test_pywebserver() {
     # Do not remove next line!
     echo "function test_pywebserver"    
-
+    echo '{"hello":"world"}' > test.json
+    curl localhost:8008/\
+        -H "Content-Type: application\json"\
+        -X POST --data @test.json
     # TODO test the webserver
     # server and port number must be extracted from config.conf
     # test data must be read from test.json  

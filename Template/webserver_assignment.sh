@@ -140,9 +140,11 @@ function install_package() {
         # Installation instruction for "pywebserver"
         if ! sudo curl \
             -L https://raw.githubusercontent.com/nickjj/webserver/v0.2.0/webserver \
-            -o /usr/local/bin/webserver && sudo chmod +x /usr/local/bin/webserver;
+            -o /usr/local/bin/webserver
         then
             handle_error "Installation of pywebserver has failed" rollback_pywebserver
+        else
+            sudo chmod +x /usr/local/bin/webserver;
         fi
 
         rm -rf apps/webserver-master

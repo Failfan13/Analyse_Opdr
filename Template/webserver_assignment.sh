@@ -101,8 +101,7 @@ function install_package() {
     elif eval "$download"; then
         echo "Package succesfully downloaded"
     else
-        handle_error "Package download failed, rolling back install"
-# ---------------- rollback hiero
+        handle_error "Package download failed, rolling back install" rollback_download
     fi
 
 # Unzipping downloaded file
@@ -114,35 +113,38 @@ function install_package() {
     elif eval "$unzip"; then
         echo "Package successfully unzipped"
     else
-        handle_error "Failed to unzip, rolling back install"
-# ----------------- rollback hiero
+        handle_error "Failed to unzip, rolling back install" rollback_download
     fi
 
 # Install nosecrets
     if [ "$pgk_name" = "nosecrets" ]; then
         # Move all files from installation dir to "apps/nomoresecrets"
         mv apps/no-more-secrets-master/* apps/nosecrets
-        # instruction for "nms"
+
+        # Instruction for "nms"
         if ! make -C "./apps/nosecrets" "nms"; then
-            handle_error "Failed to setup the no-secrets file"
-# ------------------ rollback hiero
+            handle_error "Failed to setup the no-secrets file" rollback_nosecrets
         fi
+
         # Instruction for "make install"
         if ! sudo make install -C "./apps/nosecrets"; then
-            handle_error "Installation of no-secrets has failed"
-# ------------------ rollback hiero
+            handle_error "Installation of no-secrets has failed" rollback_nosecrets
         fi
+
         rm -rf apps/no-more-secrets-master
 # Install pywebserver
     elif [ "$pgk_name" = "pywebserver" ]; then
         # Move all files from installation dir to "apps/pywebserver"
         mv apps/webserver-master/* apps/pywebserver
-        # Installation instruction for "pywebserver"
-        sudo curl \
-            -L https://raw.githubusercontent.com/nickjj/webserver/v0.2.0/webserver \
-            -o /usr/local/bin/webserver && sudo chmod +x /usr/local/bin/webserver
 
-        # Installation instructions
+        # Installation instruction for "pywebserver"
+        if ! sudo curl \
+            -L https://raw.githubusercontent.com/nickjj/webserver/v0.2.0/webserver \
+            -o /usr/local/bin/webserver && sudo chmod +x /usr/local/bin/webserver;
+        then
+            handle_error "Installation of pywebserver has failed" rollback_pywebserver
+        fi
+
         rm -rf apps/webserver-master
     fi
     echo "Installation of $pgk_name finished!"
@@ -156,14 +158,34 @@ function rollback_nosecrets() {
     # Do not remove next line!
     echo "function rollback_nosecrets"
 
-    # TODO rollback intermiediate steps when installation fails
+    # Remove nosecrets directives
+    echo -e "Returning no-secrets to before installation state"
+    rm -qrf apps/nosecrets/
+    rm -qrf apps/no-more-secrets-master/
+    rm -qrf downloads/nosecrets.zip
+    
+    if [ -f "apps/nosecrets" ] || [ -f "apps/no-more-secrets-master" ] || [ -f "downloads/nosecrets.zip" ]; then
+        handle_error "The directives of no-secrets could not be removed"
+    fi
+
+    echo "Reversal of directives complete!"
 }
 
 function rollback_pywebserver() {
     # Do not remove next line!
     echo "function rollback_pywebserver"
 
-    # TODO rollback intermiediate steps when installation fails
+    # Remove pywebserver directives
+    echo -e "Returning no-secrets to before installation state"
+    rm -qrf apps/pywebserver/
+    rm -qrf apps/webserver-master/
+    rm -qrf downloads/pywebserver.zip
+    
+    if [ -f "apps/pywebserver" ] || [ -f "apps/webserver-master" ] || [ -f "downloads/pywebserver.zip" ]; then
+        handle_error "The directives of pywebserver could not be removed"
+    fi
+
+    echo "Reversal of directives complete!"
 }
 
 function test_nosecrets() {
@@ -254,11 +276,6 @@ function main() {
             handle_error "Could not find accompanied command\nexiting..."
         ;;
     esac
-
-    # Execute the appropriate command based on the arguments
-    # TODO In case of setup
-    # excute the function check_dependency and provide necessary arguments
-    # expected arguments are the installation directory specified in dev.conf
 }
 
 # Dependency checker arguments "package_name", "(true/false) auto install"
@@ -349,6 +366,13 @@ function folder_structure()
     fi
 
     echo "Folder structure verified"
+}
+
+# Remove most recent zip file
+function rollback_download() 
+{
+    # Sorts download on time takes most recent and removes this
+    rm "$(stat -c "%Y:%n" ./downloads/* | sort -t: -n | tail -1 | cut -d: -f2-)"
 }
 
 # Pass commandline arguments to function main

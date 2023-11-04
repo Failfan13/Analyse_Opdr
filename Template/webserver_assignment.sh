@@ -193,9 +193,11 @@ function rollback_pywebserver() {
 function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
-
-    # TODO test nosecrets
+    echo "function remove"
+    # Remove each package that was installed during setup
     # kill this webserver process after it has finished its job
+    ps -ef | grep "$pgk_name" | grep -v grep | awk '{print $2}' | xargs kill
+
 
 }
 
@@ -247,6 +249,7 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
+    grep -e `date +%Y-%m-%d` /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs apt-get -y remove
     # Remove each package that was installed during setup
     
 }

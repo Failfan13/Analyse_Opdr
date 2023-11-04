@@ -200,15 +200,23 @@ function test_nosecrets() {
 function test_pywebserver() {
     # Do not remove next line!
     echo "function test_pywebserver"    
-    echo '{"hello":"world"}' > test.json
-    curl localhost:8008/\
-        -H "Content-Type: application\json"\
-        -X POST --data @test.json
-    # TODO test the webserver
-    # server and port number must be extracted from config.conf
-    # test data must be read from test.json  
-    # kill this webserver process after it has finished its job
 
+    # Extract server and port number from dev.conf & remove quote marks
+    IP="$(grep -E "WEBSERVER_IP"= "$config_file" | cut -d= -f2 | bc)"
+    PORT="$(grep -E "WEBSERVER_PORT"= "$config_file" | cut -d= -f2 | bc)"
+
+    # Start the webserver
+    "$install_dir"/pywebserver/webserver "$IP:$PORT" &
+
+    # Server has time to start up
+    sleep 3
+
+    # 
+    curl "$IP:$PORT"/ \
+        -H "Content-Type: application/json" \
+        -X POST --data @test.json
+
+    kill %1
 }
 
 function uninstall_nosecrets() {

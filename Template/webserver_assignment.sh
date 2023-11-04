@@ -199,24 +199,33 @@ function test_nosecrets() {
 
 function test_pywebserver() {
     # Do not remove next line!
-    echo "function test_pywebserver"    
+    echo "function test_pywebserver"
+
+    if [ ! "$(cmd_exists "webserver")" = 0 ] || [ ! -d ./"$install_dir"/pywebserver ]; then
+        handle_error "Pywebserver is not installed, please run setup before attempting to test"
+    fi
 
     # Extract server and port number from dev.conf & remove quote marks
     IP="$(grep -E "WEBSERVER_IP"= "$config_file" | cut -d= -f2 | bc)"
     PORT="$(grep -E "WEBSERVER_PORT"= "$config_file" | cut -d= -f2 | bc)"
 
     # Start the webserver
-    "$install_dir"/pywebserver/webserver "$IP:$PORT" &
+    "$install_dir"/pywebserver/webserver "$IP:$PORT"
 
     # Server has time to start up
     sleep 3
 
-    # 
-    curl "$IP:$PORT"/ \
+    Test the pywebserver using instruction
+    if ! curl "$IP:$PORT"/ \
         -H "Content-Type: application/json" \
-        -X POST --data @test.json
+        -X POST --data @test.json; then
+        handle_error "The test could not be concluded: missing curl dependency, please run setup"
+    fi
 
+    # Close the open server
     kill %1
+
+    echo "Test succesfull!"
 }
 
 function uninstall_nosecrets() {
@@ -243,7 +252,7 @@ function uninstall_pywebserver() {
     
     # Uninstall the pywebserver at root
     echo "Uninstalling pywebserver"
-    if sudo rm -rf /usr/local/bin/webserver; then
+    if ! sudo rm -rf /usr/local/bin/webserver; then
         handle_error "Could not be uninstalled! 
         Not installed or missing installation directory
         -- Please try running setup first"
@@ -260,8 +269,8 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
-    grep -e `date +%Y-%m-%d` /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs sudo apt-get -y remove
-    
+    # Group by date from dpkg.log, outsorts the logs with "install", removes duplicate installations & removes the downloads
+    grep -e "$(date +%Y-%m-%d)" /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs sudo apt-get -y remove
 }
 
 function main() {

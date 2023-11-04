@@ -193,12 +193,14 @@ function rollback_pywebserver() {
 function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
-    echo "function remove"
-    # Remove each package that was installed during setup
-    # kill this webserver process after it has finished its job
-    ps -ef | grep "$pgk_name" | grep -v grep | awk '{print $2}' | xargs kill
 
-
+    # Check if nosecrets installed & test if command reachable
+    echo "Testing nosecrets"
+    if [ ! -d "$install_dir/nosecrets" ] || [ "$(cmd_exists "nms")" = 1 ]; then
+        handle_error "Could not test nosecrets: install directory missing or not fully installed"
+    fi
+    # Run instructed command
+    ls -l | nms
 }
 
 function test_pywebserver() {
@@ -249,8 +251,7 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
-    grep -e "date +%Y-%m-%d" /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs apt-get -y remove
-    # Remove each package that was installed during setup
+    #
     
 }
 
@@ -289,7 +290,7 @@ function main() {
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
                 eval uninstall_"$command_formatted_low"
             elif [ "$action_formatted" = "--TEST" ]; then
-                echo $command_formatted_low"--test"
+                eval test_"$command_formatted_low"
             else
                 handle_error "Could not find accompanied action\nexiting..."
             fi

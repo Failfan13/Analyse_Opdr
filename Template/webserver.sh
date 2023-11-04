@@ -40,7 +40,7 @@ function setup() {
     check_dependencies
 
     # Installer for packages in global variable
-    install_packages
+    # install_packages
 }
 
 # Function to install packages with arguments package_name package_url
@@ -277,10 +277,10 @@ function main() {
     # Do not remove next line!
     echo "function main"
 
-# Verify supplied commands is 1 atleast
-    if [ $# -lt 1 ]; then
-        handle_error "No command supplied"
-    fi
+# # Verify supplied commands is 1 atleast
+#     if [ $# -lt 1 ]; then
+#         handle_error "No command supplied"
+#     fi
 
 # Command and action given at excecution of script
     command="$1"
@@ -309,15 +309,21 @@ function main() {
                 eval uninstall_"$command_formatted_low"
             elif [ "$action_formatted" = "--TEST" ]; then
                 eval test_"$command_formatted_low"
-            else
-                handle_error "Could not find accompanied action\nexiting..."
+            # else
+            #     handle_error "Could not find accompanied action\nexiting..."
             fi
             ;;
         "REMOVE")
             remove
             ;;
         *)    
-            handle_error "Could not find accompanied command\nexiting..."
+            # handle_error "Could not find accompanied command\nexiting..."
+            echo "Command could not be found:
+            Command list
+            ./webserver.sh setup
+            ./webserver.sh remove
+            ./webserver.sh nosecrets --install, --test, --uninstall
+            ./webserver.sh pywebserver --install, --test, --uninstall"
         ;;
     esac
 }

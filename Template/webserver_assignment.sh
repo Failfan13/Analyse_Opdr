@@ -249,7 +249,7 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
-    grep -e `date +%Y-%m-%d` /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs apt-get -y remove
+    grep -e "date +%Y-%m-%d" /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs apt-get -y remove
     # Remove each package that was installed during setup
     
 }

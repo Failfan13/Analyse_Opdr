@@ -260,7 +260,7 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
-    #
+    grep -e `date +%Y-%m-%d` /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs sudo apt-get -y remove
     
 }
 

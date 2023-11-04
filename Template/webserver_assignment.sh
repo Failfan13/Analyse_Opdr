@@ -28,35 +28,22 @@ function handle_error() {
     exit 1
 }
  
-# Function to solve dependencies
+# Function to install dependencies & check folder structure
 function setup() {
     # Do not remove next line!
     echo "function setup"
-
-    # Set install directory to conf specified and use cut to remove variable name
-    # install_dir="$(grep -E "INSTALL_DIR=" "$config_file" | cut -d= -f2)"
 
     # Function for checking folder structure
     folder_structure
 
     # Checks each dependency in $dependancies
-    echo -e "\nChecking required dependencies"
-    for pkg in "${dependancies[@]}";
-    do
-        echo "Checking dependency: $pkg"
-        check_dependency "$pkg"
-    done
+    check_dependencies
 
     # Installer for packages in global variable
     install_packages
 }
 
-# Function to install a package from a URL
-# TODO assign the required parameter needed for the logic
-# complete the implementation of the following function.
-
-# Function to install packages with arguments package_name
-
+# Function to install packages with arguments package_name package_url
 function install_package() {
     # Do not remove next line!
     echo "function install_package"
@@ -64,12 +51,15 @@ function install_package() {
     pgk_name="$1"
     pkg_url="$2"
 
-# Check if file name and url are not empty
+    # Checks each dependency in $dependancies
+    check_dependencies
+
+    # Check if file name and url are not empty
     if [ -z "$pgk_name" ] || [ -z "$pkg_url" ]; then
         handle_error "Package info could not be received"
     fi
 
-# Check if package folder already exists
+    # Check if package folder already exists
     echo "Checking package folders"
     if [ ! -d "./$install_dir/$pgk_name" ]; then
         echo "Creating package folder"
@@ -77,11 +67,10 @@ function install_package() {
     elif [ -z "$(ls -A "./$install_dir/$pgk_name")" ]; then
         echo "Folder for $pgk_name already exists"
     else
-    echo ""
-        # handle_error "$pgk_name already installed. Please remove if not working"
+        handle_error "$pgk_name already installed. Please remove if not working"
     fi
 
-# Check if URL is valid
+    # Check if URL is valid
     echo -e "\nValidating URL"
     if curl --output /dev/null --silent --head --fail "$pkg_url"; then
         echo "Url is accessable"
@@ -90,12 +79,12 @@ function install_package() {
         return
     fi
 
-# Download the zip file to downloads folder
+    # Download the zip file to downloads folder
     echo -e "\nDownloading package to downloads folder"
     mkdir ./downloads
     download="wget -qO ./downloads/$pgk_name.zip $pkg_url"
 
-# Download succesfull or not
+    # Download succesfull or not
     if [ -f "./downloads/$pgk_name.zip" ]; then
         echo "Package has already been downloaded"
     elif eval "$download"; then
@@ -104,7 +93,7 @@ function install_package() {
         handle_error "Package download failed, rolling back install" rollback_download
     fi
 
-# Unzipping downloaded file
+    # Unzipping downloaded file
     echo -e "\nUnzipping downloaded package"
     unzip="unzip ./downloads/$pgk_name.zip -d ./$install_dir"
 
@@ -116,7 +105,7 @@ function install_package() {
         handle_error "Failed to unzip, rolling back install" rollback_download
     fi
 
-# Install nosecrets
+    # Install nosecrets
     if [ "$pgk_name" = "nosecrets" ]; then
         # Move all files from installation dir to "apps/nomoresecrets"
         mv apps/no-more-secrets-master/* apps/nosecrets
@@ -132,7 +121,8 @@ function install_package() {
         fi
 
         rm -rf apps/no-more-secrets-master
-# Install pywebserver
+
+    # Install pywebserver
     elif [ "$pgk_name" = "pywebserver" ]; then
         # Move all files from installation dir to "apps/pywebserver"
         mv apps/webserver-master/* apps/pywebserver
@@ -143,6 +133,7 @@ function install_package() {
             -o /usr/local/bin/webserver
         then
             handle_error "Installation of pywebserver has failed" rollback_pywebserver
+        # Fix webserver no permission to /usr/local/bin/webserver error
         else
             sudo chmod +x /usr/local/bin/webserver;
         fi
@@ -166,8 +157,9 @@ function rollback_nosecrets() {
     rm -rf apps/no-more-secrets-master/
     rm -rf downloads/nosecrets.zip
     
+    # Check if all folder removed 
     if [ -f "apps/nosecrets" ] || [ -f "apps/no-more-secrets-master" ] || [ -f "downloads/nosecrets.zip" ]; then
-        handle_error "The directives of no-secrets could not be removed"
+        handle_error "Some directives of no-secrets could not be removed"
     fi
 
     echo "Reversal of directives complete!"
@@ -183,6 +175,7 @@ function rollback_pywebserver() {
     rm -rf apps/webserver-master/
     rm -rf downloads/pywebserver.zip
     
+    # Check if all folder removed 
     if [ -f "apps/pywebserver" ] || [ -f "apps/webserver-master" ] || [ -f "downloads/pywebserver.zip" ]; then
         handle_error "The directives of pywebserver could not be removed"
     fi
@@ -193,12 +186,15 @@ function rollback_pywebserver() {
 function test_nosecrets() {
     # Do not remove next line!
     echo "function test_nosecrets"
-    echo "function remove"
-    # Remove each package that was installed during setup
-    # kill this webserver process after it has finished its job
-    ps -ef | grep "$pgk_name" | grep -v grep | awk '{print $2}' | xargs kill
 
+    # Check if nosecrets installed & test if command reachable
+    echo "Testing nosecrets"
+    if [ ! -d "$install_dir/nosecrets" ] || [ "$(cmd_exists "nms")" = 1 ]; then
+        handle_error "Could not test nosecrets: install directory missing or not fully installed"
+    fi
 
+    # Run instructed command
+    ls -l | nms
 }
 
 function test_pywebserver() {
@@ -229,6 +225,7 @@ function uninstall_nosecrets() {
 
     # Clean directives
     rollback_nosecrets
+
     echo "Succesfully removed!"
 }
 
@@ -236,6 +233,7 @@ function uninstall_pywebserver() {
     # Do not remove next line!
     echo "function uninstall_pywebserver"    
     
+    # Uninstall the pywebserver at root
     echo "Uninstalling pywebserver"
     if sudo rm -rf /usr/local/bin/webserver; then
         handle_error "Could not be uninstalled! 
@@ -243,7 +241,9 @@ function uninstall_pywebserver() {
         -- Please try running setup first"
     fi
 
+    # Clean directives
     rollback_pywebserver
+
     echo "Succesfully removed!"
 }
 
@@ -252,8 +252,7 @@ function remove() {
     # Do not remove next line!
     echo "function remove"
 
-    grep -e "date +%Y-%m-%d" /var/log/dpkg.log | awk '/install / {print $4}' | uniq | xargs apt-get -y remove
-    # Remove each package that was installed during setup
+    #
     
 }
 
@@ -292,7 +291,7 @@ function main() {
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
                 eval uninstall_"$command_formatted_low"
             elif [ "$action_formatted" = "--TEST" ]; then
-                echo $command_formatted_low"--test"
+                eval test_"$command_formatted_low"
             else
                 handle_error "Could not find accompanied action\nexiting..."
             fi
@@ -328,6 +327,16 @@ function check_dependency() {
     else
         handle_error "$1 not able to install, To install please use: sudo apt install $1\n"
     fi
+}
+
+function check_dependencies()
+{
+    echo -e "\nChecking required dependencies"
+    for pkg in "${dependancies[@]}";
+    do
+        echo "Checking dependency: $pkg"
+        check_dependency "$pkg"
+    done
 }
 
 # Installs all packages in the global variable $packages

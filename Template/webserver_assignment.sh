@@ -47,14 +47,8 @@ function setup() {
         check_dependency "$pkg"
     done
 
-    # Call install_package for each package in global packages variable
-    echo -e "Installing packages"
-    for pkg in "${packages[@]}"; 
-    do
-        read -ra pkg_url_arr <<< "$pkg"
-        url="$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
-        install_package "${pkg_url_arr[0]}" "$url"
-    done
+    # Installer for packages in global variable
+    install_packages
 }
 
 # Function to install a package from a URL
@@ -62,6 +56,7 @@ function setup() {
 # complete the implementation of the following function.
 
 # Function to install packages with arguments package_name
+
 function install_package() {
     # Do not remove next line!
     echo "function install_package"
@@ -82,7 +77,8 @@ function install_package() {
     elif [ -z "$(ls -A "./$install_dir/$pgk_name")" ]; then
         echo "Folder for $pgk_name already exists"
     else
-        handle_error "$pgk_name already installed. Please remove if not working"
+    echo ""
+        # handle_error "$pgk_name already installed. Please remove if not working"
     fi
 
 # Check if URL is valid
@@ -111,7 +107,8 @@ function install_package() {
 
 # Unzipping downloaded file
     echo -e "\nUnzipping downloaded package"
-    unzip="unzip -j ./downloads/$pgk_name -d ./$install_dir/$pgk_name"
+    unzip="unzip ./downloads/$pgk_name.zip -d ./$install_dir"
+
     if [ ! -f "./downloads/$pgk_name.zip" ]; then
         echo "Package zip not found please re-install"
     elif eval "$unzip"; then
@@ -121,9 +118,38 @@ function install_package() {
 # ----------------- rollback hiero
     fi
 
-    # TODO this section can be used to implement application specifc logic
-    # nosecrets might have additional commands that needs to be executed
-    # make sure the user is allowed to remove this folder during uninstall
+# Install nosecrets
+    if [ "$pgk_name" = "nosecrets" ]; then
+        # Move all files from installation dir to "apps/nomoresecrets"
+        mv apps/no-more-secrets-master/* apps/nosecrets
+        # instruction for "nms"
+        if ! make -C "./apps/nosecrets" "nms"; then
+            handle_error "Failed to setup the no-secrets file"
+# ------------------ rollback hiero
+        fi
+        # Instruction for "make install"
+        if ! sudo make install -C "./apps/nosecrets"; then
+            handle_error "Installation of no-secrets has failed"
+# ------------------ rollback hiero
+        fi
+        rm -rf apps/no-more-secrets-master
+# Install pywebserver
+    elif [ "$pgk_name" = "pywebserver" ]; then
+        # Move all files from installation dir to "apps/pywebserver"
+        mv apps/webserver-master/* apps/pywebserver
+        # Installation instruction for "pywebserver"
+        sudo curl \
+            -L https://raw.githubusercontent.com/nickjj/webserver/v0.2.0/webserver \
+            -o /usr/local/bin/webserver && sudo chmod +x /usr/local/bin/webserver
+
+        # Installation instructions
+        rm -rf apps/webserver-master
+    fi
+    echo "Installation of $pgk_name finished!"
+
+
+# Clean download space
+    rm ./downloads/"$pgk_name".zip
 }
 
 function rollback_nosecrets() {
@@ -202,13 +228,17 @@ function main() {
 # Verify command is available and run attachted function
     case $command_formatted_up in
         "SETUP")
-            # setup
+            setup
             ;;
         "NOSECRETS" | "PYWEBSERVER")
 # Add options for "install, uninstall and test"
             if [ "$action_formatted" = "--INSTALL" ];then
-                read -ra pkg_url_arr <<< "${packages[0]}"
-                install_package "$command_formatted_low" "$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
+                for pkg in "${packages[@]}"; do
+                    if [[ $pkg = *"$command_formatted_low"* ]]; then
+                        read -ra pkg_url_arr <<< "$pkg"
+                        install_package "$command_formatted_low" "$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
+                    fi
+                done
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
                 echo $command_formatted_low"--uninstall"
             elif [ "$action_formatted" = "--TEST" ]; then
@@ -253,6 +283,19 @@ function check_dependency() {
     else
         handle_error "$1 not able to install, To install please use: sudo apt install $1\n"
     fi
+}
+
+# Installs all packages in the global variable $packages
+function install_packages() 
+{
+    # Call install_package for each package in global packages variable
+    echo -e "Installing packages"
+    for pkg in "${packages[@]}"; 
+    do
+        read -ra pkg_url_arr <<< "$pkg"
+        url="$(grep -E "${pkg_url_arr[1]}"= "$config_file" | cut -d= -f2)"
+        install_package "${pkg_url_arr[0]}" "$url"
+    done
 }
 
 # Checks if given command exists and returns 0/1 to caller

@@ -160,9 +160,9 @@ function rollback_nosecrets() {
 
     # Remove nosecrets directives
     echo -e "Returning no-secrets to before installation state"
-    rm -qrf apps/nosecrets/
-    rm -qrf apps/no-more-secrets-master/
-    rm -qrf downloads/nosecrets.zip
+    rm -rf apps/nosecrets/
+    rm -rf apps/no-more-secrets-master/
+    rm -rf downloads/nosecrets.zip
     
     if [ -f "apps/nosecrets" ] || [ -f "apps/no-more-secrets-master" ] || [ -f "downloads/nosecrets.zip" ]; then
         handle_error "The directives of no-secrets could not be removed"
@@ -177,9 +177,9 @@ function rollback_pywebserver() {
 
     # Remove pywebserver directives
     echo -e "Returning no-secrets to before installation state"
-    rm -qrf apps/pywebserver/
-    rm -qrf apps/webserver-master/
-    rm -qrf downloads/pywebserver.zip
+    rm -rf apps/pywebserver/
+    rm -rf apps/webserver-master/
+    rm -rf downloads/pywebserver.zip
     
     if [ -f "apps/pywebserver" ] || [ -f "apps/webserver-master" ] || [ -f "downloads/pywebserver.zip" ]; then
         handle_error "The directives of pywebserver could not be removed"
@@ -212,12 +212,32 @@ function uninstall_nosecrets() {
     # Do not remove next line!
     echo "function uninstall_nosecrets"  
 
-    #TODO uninstall nosecrets application
+    # Uninstalling nosecrets
+    echo "Uninstalling no-secrets"
+    if ! sudo make uninstall -C "./apps/nosecrets"; then
+        handle_error "Could not be uninstalled! 
+        Not installed or missing installation directory
+        -- Please try running setup first"
+    fi
+
+    # Clean directives
+    rollback_nosecrets
+    echo "Succesfully removed!"
 }
 
 function uninstall_pywebserver() {
+    # Do not remove next line!
     echo "function uninstall_pywebserver"    
-    #TODO uninstall pywebserver application
+    
+    echo "Uninstalling pywebserver"
+    if sudo rm -rf /usr/local/bin/webserver; then
+        handle_error "Could not be uninstalled! 
+        Not installed or missing installation directory
+        -- Please try running setup first"
+    fi
+
+    rollback_pywebserver
+    echo "Succesfully removed!"
 }
 
 #TODO removing installed dependency during setup() and restoring the folder structure to original state
@@ -262,7 +282,7 @@ function main() {
                     fi
                 done
             elif [ "$action_formatted" = "--UNINSTALL" ]; then
-                echo $command_formatted_low"--uninstall"
+                eval uninstall_"$command_formatted_low"
             elif [ "$action_formatted" = "--TEST" ]; then
                 echo $command_formatted_low"--test"
             else

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Students:
+#    Roggerio Hartmann 1014804 
+#    Erik Maan 1033231
+
 # Define global variable here
 config_file="dev.conf"
 install_dir=""
